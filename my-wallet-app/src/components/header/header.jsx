@@ -1,5 +1,5 @@
 import React from "react";
-import Web3 from 'web3';
+import Web3 from "web3";
 
 import { useState, useEffect } from "react";
 
@@ -28,7 +28,6 @@ export const Header = () => {
     return () => clearTimeout(timeout);
   }, [walletAddress]);
 
-  
   // connecting the wallet from the browser using a button
   const addMetaMask = async () => {
     if (window.ethereum) {
@@ -37,7 +36,7 @@ export const Header = () => {
           method: "eth_requestAccounts",
         });
         setWalletAddress(accounts[0]);
-        getBalanceAddres()
+        // getBalanceAddres()
         console.log(walletAddress, balance);
       } catch (error) {
         console.error(error.message);
@@ -53,14 +52,17 @@ export const Header = () => {
   });
 
   const getConnectedWallet = async () => {
-    if (window.ethereum ) {
+    if (window.ethereum) {
       try {
         const accounts = await window.ethereum.request({
           method: "eth_accounts",
         });
         if (accounts.length > 0) {
-          setWalletAddress(accounts[0]);
-          getBalanceAddres()
+           setWalletAddress(accounts[0]);
+          const balanceWei = await web3.eth.getBalance(walletAddress);
+          const balanceEth = web3.utils.fromWei(balanceWei, "ether");
+          setBalance(parseFloat(balanceEth).toFixed(4).slice(0, -1));
+          // getBalanceAddres()
         } else {
           console.log("Connect to MetaMask using the Connect button");
         }
@@ -73,15 +75,15 @@ export const Header = () => {
   };
 
   // get the balance of the connected wallet
-  const getBalanceAddres = async () => {
-    const balanceWei = await web3.eth.getBalance(walletAddress);
-    const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
-    setBalance(parseFloat(balanceEth).toFixed(3))
-  }
+  // const getBalanceAddres = async () => {
+  //   const balanceWei = await web3.eth.getBalance(walletAddress);
+  //   const balanceEth = web3.utils.fromWei(balanceWei, 'ether');
+  //   setBalance(parseFloat(balanceEth).toFixed(4).slice(0, -1));
+  // }
 
   return (
     <header className={style.header}>
-      <LogoHeader/>
+      <LogoHeader />
       <Box>
         <Button onClick={addMetaMask} variant="outlined" color="inherit">
           {walletAddress
