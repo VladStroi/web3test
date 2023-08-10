@@ -1,13 +1,14 @@
 import React from "react";
 import { useState, useEffect, useContext } from "react";
 import { Context } from "../context";
+
 import Web3 from "web3";
 
 import style from "./style.module.css";
+import { LogoHeader } from "./logo";
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import { LogoHeader } from "./logo";
 import { Box } from "@mui/material";
 
 const web3 = new Web3(window.ethereum);
@@ -18,23 +19,6 @@ export const Header = () => {
   const [balance, setBalance] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [checkWallet, setCheckWallet] = useState(false);
-  const [checkMobileBrowser, setCheckMobileBrowser] = useState(false);
-
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setCheckWallet(false);
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [checkWallet]);
-
-  // alert about the wallet connected
-  useEffect(() => {
-    setIsVisible(true);
-    const timeout = setTimeout(() => {
-      setIsVisible(false);
-    }, 2000);
-    return () => clearTimeout(timeout);
-  }, [value.address]);
 
   // connecting the wallet from the browser using a button
   const addMetaMask = async () => {
@@ -63,9 +47,7 @@ export const Header = () => {
   const getConnectedWallet = async () => {
     if (window.ethereum) {
       try {
-        const accounts = await window.ethereum.request({
-          method: "eth_accounts",
-        });
+        const accounts = await web3.eth.getAccounts();
         if (accounts.length > 0) {
           value.setAddress(accounts[0]);
           const balanceWei = await web3.eth.getBalance(accounts[0]);
@@ -73,7 +55,7 @@ export const Header = () => {
           setBalance(parseFloat(balanceEth).toFixed(4).slice(0, -1));
         } else {
           console.log("Connect to MetaMask using the Connect button");
-          setCheckWallet("Connect to MetaMask using the Connect button");
+          setCheckWallet("Connect to MetaMask using the [Connect button]");
         }
       } catch (error) {
         console.error(error.message);
@@ -85,6 +67,23 @@ export const Header = () => {
         : setCheckWallet("Please install MetaMask");
     }
   };
+
+// Manage notifications
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setCheckWallet(false);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [checkWallet]);
+
+  useEffect(() => {
+    setIsVisible(true);
+    const timeout = setTimeout(() => {
+      setIsVisible(false);
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [value.address]);
+
 
   return (
     <header className={style.header}>

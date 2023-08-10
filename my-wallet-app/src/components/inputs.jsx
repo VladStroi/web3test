@@ -1,7 +1,9 @@
-import React, { useEffect, useLayoutEffect, useState } from "react";
-import { useContext } from "react";
+import React from "react";
+import { useState, useEffect, useContext } from "react";
 import { Context } from "../context";
+
 import Web3 from "web3";
+
 import style from "./style.module.css";
 
 import Box from "@mui/material/Box";
@@ -10,22 +12,21 @@ import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
 import CircularProgress from "@mui/material/CircularProgress";
 import Skeleton from "@mui/material/Skeleton";
-import Stack from "@mui/material/Stack";
 
-// TODO: clear consoles and comments
+// TODO:
+// add add gas limit?  if so yes, so why, and how much?
 
 const web3 = new Web3(window.ethereum);
 
 export const Inputs = () => {
   const value = useContext(Context);
 
-  // const [balance, setBalance] = useState("");
-
   const [toAddress, setToAddress] = useState("");
   const [sendAmount, setSendAmount] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const [errorReceipt, setErrorReceipt] = useState(false);
+  const [receiptError, setReceiptError] = useState(false);
+  const [receiptSuccess, setReceiptSuccess] = useState(false);
 
   // Fetch address and balance using async/await
   const getAddresAndBalance = async () => {
@@ -33,44 +34,43 @@ export const Inputs = () => {
       try {
         const balanceWei = await web3.eth.getBalance(value.address);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
-        // setBalance(balanceEth);
-
         return { balance: balanceEth };
       } catch (error) {
         console.error("Error fetching address and balance:", error);
-        setErrorReceipt("Error fetching address and balance");
+        setReceiptError("Error fetching address and balance");
       }
     }
   };
 
+  // Sending tokens
   const sendTokens = async () => {
     try {
       setIsSending(true);
 
       const amountWei = web3.utils.toWei(sendAmount, "ether");
 
-      const gasLimit = await web3.eth.estimateGas({
-        to: value.address,
-      });
+      const gasPrice = await web3.eth.getGasPrice();
 
       const sendForm = {
         from: value.address,
         to: toAddress,
         value: amountWei,
-        gas: web3.utils.fromWei(gasLimit, "wei"),
+        gas: web3.utils.fromWei(gasPrice, "wei"),
       };
 
       const receipt = await web3.eth.sendTransaction(sendForm);
 
       console.log("Transaction receipt:", receipt);
+      setReceiptSuccess("Transaction successful");
       setIsSending(false);
     } catch (error) {
       console.error("Error sending tokens:", error);
-      setErrorReceipt("Error sending tokens, try later");
+      setReceiptError("Error sending tokens, try later");
       setIsSending(false);
     }
   };
 
+  // Data validation from input fields
   const validateAndSend = async () => {
     try {
       const { balance } = await getAddresAndBalance();
@@ -91,6 +91,7 @@ export const Inputs = () => {
     }
   };
 
+  // Manage notifications
   useEffect(() => {
     const timeout = setTimeout(() => {
       setValidationError("");
@@ -100,10 +101,17 @@ export const Inputs = () => {
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setErrorReceipt("");
+      setReceiptError("");
     }, 3000);
     return () => clearTimeout(timeout);
-  }, [errorReceipt]);
+  }, [receiptError]);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setReceiptSuccess("");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [receiptSuccess]);
 
   return (
     <>
@@ -123,6 +131,7 @@ export const Inputs = () => {
             label="Wallet"
             variant="outlined"
             value={toAddress}
+            onKeyDown={(e) => e.key === "Enter" && validateAndSend()}
             onChange={(e) => setToAddress(e.target.value)}
           />
           <TextField
@@ -170,10 +179,22 @@ export const Inputs = () => {
           <Skeleton variant="rounded" width={"10vw"} height={50} />
         </Box>
       )}
-      {validationError && <Alert severity="warning">{validationError}</Alert>}
-      {errorReceipt && (
+
+      {/* Information alert  */}
+
+      {receiptSuccess && (
+        <Alert severity="success" sx={{ width: "100%" }}>
+          {receiptSuccess}
+        </Alert>
+      )}
+      {validationError && (
+        <Alert severity="warning" sx={{ width: "100%" }}>
+          {validationError}
+        </Alert>
+      )}
+      {receiptError && (
         <Alert severity="error" sx={{ width: "100%" }}>
-          {errorReceipt}
+          {receiptError}
         </Alert>
       )}
     </>
