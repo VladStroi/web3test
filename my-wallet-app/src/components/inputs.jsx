@@ -2,22 +2,30 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import { useContext } from "react";
 import { Context } from "../context";
 import Web3 from "web3";
+import style from "./style.module.css";
 
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Alert from "@mui/material/Alert";
+import CircularProgress from "@mui/material/CircularProgress";
+import Skeleton from "@mui/material/Skeleton";
+import Stack from "@mui/material/Stack";
+
+// TODO: clear consoles and comments
 
 const web3 = new Web3(window.ethereum);
 
 export const Inputs = () => {
   const value = useContext(Context);
 
-  const [balance, setBalance] = useState("");
+  // const [balance, setBalance] = useState("");
+
   const [toAddress, setToAddress] = useState("");
   const [sendAmount, setSendAmount] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [errorReceipt, setErrorReceipt] = useState(false);
 
   // Fetch address and balance using async/await
   const getAddresAndBalance = async () => {
@@ -25,11 +33,12 @@ export const Inputs = () => {
       try {
         const balanceWei = await web3.eth.getBalance(value.address);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
-        setBalance(balanceEth);
+        // setBalance(balanceEth);
 
         return { balance: balanceEth };
       } catch (error) {
         console.error("Error fetching address and balance:", error);
+        setErrorReceipt("Error fetching address and balance");
       }
     }
   };
@@ -57,6 +66,7 @@ export const Inputs = () => {
       setIsSending(false);
     } catch (error) {
       console.error("Error sending tokens:", error);
+      setErrorReceipt("Error sending tokens, try later");
       setIsSending(false);
     }
   };
@@ -88,45 +98,84 @@ export const Inputs = () => {
     return () => clearTimeout(timeout);
   }, [validationError]);
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setErrorReceipt("");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [errorReceipt]);
+
   return (
-    <Box
-      sx={{
-        "& > :not(style)": { m: 1, width: "25ch" },
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-      noValidate
-      autoComplete="off"
-    >
-      <TextField
-        label="Wallet"
-        variant="outlined"
-        value={toAddress}
-        onChange={(e) => setToAddress(e.target.value)}
-      />
-      <TextField
-        label="Amount"
-        type="number"
-        variant="outlined"
-        value={sendAmount}
-        onKeyDown={(e) => e.key === 'Enter' && validateAndSend()}
-        onChange={(e) => setSendAmount(e.target.value)}
-      />
+    <>
+      {value.address && (
+        <Box
+          className={style.inputs}
+          sx={{
+            "& > :not(style)": { m: 1, width: "25ch" },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+          noValidate
+          autoComplete="off"
+        >
+          <TextField
+            label="Wallet"
+            variant="outlined"
+            value={toAddress}
+            onChange={(e) => setToAddress(e.target.value)}
+          />
+          <TextField
+            label="Amount"
+            type="number"
+            variant="outlined"
+            value={sendAmount}
+            onKeyDown={(e) => e.key === "Enter" && validateAndSend()}
+            onChange={(e) => setSendAmount(e.target.value)}
+          />
 
-      <Button
-        variant="outlined"
-        color="inherit"
-        sx={{ margin: "8px auto" }}
-        onClick={validateAndSend}
-        disabled={isSending}
-      >
-        {isSending ? "Sending..." : "Send"}
-      </Button>
-
+          {isSending ? (
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box sx={{ display: "flex" }}>
+              <Button
+                variant="outlined"
+                color="inherit"
+                sx={{ margin: "8px auto" }}
+                onClick={validateAndSend}
+                disabled={isSending}
+              >
+                Sand
+              </Button>
+            </Box>
+          )}
+        </Box>
+      )}
+      {!value.address && (
+        <Box
+          className={style.inputs}
+          sx={{
+            "& > :not(style)": { m: 1, width: "25ch" },
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+          }}
+          noValidate
+          autoComplete="off"
+        >
+          <Skeleton variant="rounded" width={"30vw"} height={50} />
+          <Skeleton variant="rounded" width={"30vw"} height={50} />
+          <Skeleton variant="rounded" width={"10vw"} height={50} />
+        </Box>
+      )}
       {validationError && <Alert severity="warning">{validationError}</Alert>}
-      <p id="validationWalletMessage"></p>
-      <p id="validationBalanceMessage"></p>
-    </Box>
+      {errorReceipt && (
+        <Alert severity="error" sx={{ width: "100%" }}>
+          {errorReceipt}
+        </Alert>
+      )}
+    </>
   );
 };

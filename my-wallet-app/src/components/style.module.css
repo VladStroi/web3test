@@ -16,3 +16,16 @@
   border-radius: 5px;
 }
 
+.inputs {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.inputs div {
+  min-width: 30vw;
+}
+.inputs button {
+  min-width: 10vw;
+}
+

@@ -3,7 +3,6 @@ import { useState, useEffect, useContext } from "react";
 import { Context } from "../context";
 import Web3 from "web3";
 
-
 import style from "./style.module.css";
 
 import Alert from "@mui/material/Alert";
@@ -14,11 +13,19 @@ import { Box } from "@mui/material";
 const web3 = new Web3(window.ethereum);
 
 export const Header = () => {
+  const value = useContext(Context);
 
-  const value = useContext(Context)
-
-  const [isVisible, setIsVisible] = useState(false);
   const [balance, setBalance] = useState(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [checkWallet, setCheckWallet] = useState(false);
+  const [checkMobileBrowser, setCheckMobileBrowser] = useState(false);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setCheckWallet(false);
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [checkWallet]);
 
   // alert about the wallet connected
   useEffect(() => {
@@ -36,19 +43,22 @@ export const Header = () => {
         const accounts = await window.ethereum.request({
           method: "eth_requestAccounts",
         });
-          value.setAddress(accounts[0])
+        value.setAddress(accounts[0]);
       } catch (error) {
         console.error(error.message);
       }
     } else {
-      console.error("Please install MetaMask");
+      console.log("Please install MetaMask");
+      window.innerWidth <= 1280
+        ? setCheckWallet("The site does not support phones and tablets")
+        : setCheckWallet("Please install MetaMask");
     }
   };
 
   // if the wallet is connected to the site, add it automatically
   useEffect(() => {
     getConnectedWallet();
-  });
+  }, []);
 
   const getConnectedWallet = async () => {
     if (window.ethereum) {
@@ -57,18 +67,22 @@ export const Header = () => {
           method: "eth_accounts",
         });
         if (accounts.length > 0) {
-          value.setAddress(accounts[0])
+          value.setAddress(accounts[0]);
           const balanceWei = await web3.eth.getBalance(accounts[0]);
           const balanceEth = web3.utils.fromWei(balanceWei, "ether");
           setBalance(parseFloat(balanceEth).toFixed(4).slice(0, -1));
         } else {
           console.log("Connect to MetaMask using the Connect button");
+          setCheckWallet("Connect to MetaMask using the Connect button");
         }
       } catch (error) {
         console.error(error.message);
       }
     } else {
-      console.error("Please install MetaMask");
+      console.log("Please install MetaMask");
+      window.innerWidth <= 1280
+        ? setCheckWallet("The site does not support phones and tablets")
+        : setCheckWallet("Please install MetaMask");
     }
   };
 
@@ -88,6 +102,7 @@ export const Header = () => {
         {isVisible && value.address && (
           <Alert severity="success">the wallet is connected</Alert>
         )}
+        {checkWallet && <Alert severity="warning">{checkWallet}</Alert>}
       </Box>
     </header>
   );
