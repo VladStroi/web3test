@@ -6,12 +6,12 @@ import Web3 from "web3";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 
 const web3 = new Web3(window.ethereum);
 
 export const Inputs = () => {
-
-  const value = useContext(Context)
+  const value = useContext(Context);
 
   const [balance, setBalance] = useState("");
   const [toAddress, setToAddress] = useState("");
@@ -19,16 +19,15 @@ export const Inputs = () => {
   const [validationError, setValidationError] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-
-   // Fetch address and balance using async/await
-   const getAddresAndBalance = async () => {
+  // Fetch address and balance using async/await
+  const getAddresAndBalance = async () => {
     if (window.ethereum) {
       try {
         const balanceWei = await web3.eth.getBalance(value.address);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
         setBalance(balanceEth);
 
-        return {balance: balanceEth}
+        return { balance: balanceEth };
       } catch (error) {
         console.error("Error fetching address and balance:", error);
       }
@@ -39,19 +38,19 @@ export const Inputs = () => {
     try {
       setIsSending(true);
 
-      const amountWei = web3.utils.toWei(sendAmount, 'ether');
-      
-      // const gasLimit = await web3.eth.estimateGas({
-        //   to: address,
-        // });
-        
-        const sendForm = {
-          from: value.address,
-          to: toAddress,
-          value: amountWei,
-          gas: 50000,
-        };
-       
+      const amountWei = web3.utils.toWei(sendAmount, "ether");
+
+      const gasLimit = await web3.eth.estimateGas({
+        to: value.address,
+      });
+
+      const sendForm = {
+        from: value.address,
+        to: toAddress,
+        value: amountWei,
+        gas: web3.utils.fromWei(gasLimit, "wei"),
+      };
+
       const receipt = await web3.eth.sendTransaction(sendForm);
 
       console.log("Transaction receipt:", receipt);
@@ -64,13 +63,13 @@ export const Inputs = () => {
 
   const validateAndSend = async () => {
     try {
-      const {balance} = await getAddresAndBalance();
-
-      console.log(balance);
+      const { balance } = await getAddresAndBalance();
 
       const validAddress = /^(0x)?[0-9a-fA-F]{40}$/.test(toAddress);
       const validAmount =
-        !isNaN(sendAmount) && parseFloat(sendAmount) <= parseFloat(balance) && parseFloat(sendAmount) !== 0;
+        !isNaN(sendAmount) &&
+        parseFloat(sendAmount) <= parseFloat(balance) &&
+        parseFloat(sendAmount) !== 0;
 
       if (validAddress && validAmount) {
         await sendTokens();
@@ -81,6 +80,13 @@ export const Inputs = () => {
       console.error("Validation error:", error);
     }
   };
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setValidationError("");
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [validationError]);
 
   return (
     <Box
@@ -101,8 +107,10 @@ export const Inputs = () => {
       />
       <TextField
         label="Amount"
+        type="number"
         variant="outlined"
         value={sendAmount}
+        onKeyDown={(e) => e.key === 'Enter' && validateAndSend()}
         onChange={(e) => setSendAmount(e.target.value)}
       />
 
@@ -115,8 +123,8 @@ export const Inputs = () => {
       >
         {isSending ? "Sending..." : "Send"}
       </Button>
-      
-      {validationError && <p>{validationError}</p>}
+
+      {validationError && <Alert severity="warning">{validationError}</Alert>}
       <p id="validationWalletMessage"></p>
       <p id="validationBalanceMessage"></p>
     </Box>
