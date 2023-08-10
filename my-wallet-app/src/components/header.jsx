@@ -33,9 +33,8 @@ export const Header = () => {
   const addMetaMask = async () => {
     if (window.ethereum) {
       try {
-        await window.ethereum.sendAsync("eth_requestAccounts");
         const accounts = await window.ethereum.request({
-          method: "eth_accounts",
+          method: "eth_requestAccounts",
         });
           value.setAddress(accounts[0])
       } catch (error) {
