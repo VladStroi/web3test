@@ -1,17 +1,29 @@
 import "./App.css";
 
-import { Header } from "./components/header/header";
-import { Inputs } from "./components/form area/inputs";
+import { useState } from "react";
+import { Context } from "./context";
+
+import { Header } from "./components/header";
+import { Inputs } from "./components/inputs";
 
 function App() {
+  
+  const [address, setAddress] = useState(null);
+
   return (
-    <>
-      <Header />
-      <Inputs />
-      {/* <button>
+    <Context.Provider
+      value={{
+        address, setAddress
+      }}
+    >
+      <>
+        <Header />
+        <Inputs />
+        {/* <button>
       <a href="https://github.com/VladStroi/web3test">https://github.com/VladStroi/web3test</a>
-      </button> */}
-    </>
+    </button> */}
+      </>
+    </Context.Provider>
   );
 }
 
