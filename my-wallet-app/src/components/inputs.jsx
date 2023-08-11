@@ -49,13 +49,27 @@ export const Inputs = () => {
 
       const amountWei = web3.utils.toWei(sendAmount, "ether");
 
-      const gasPrice = await web3.eth.getGasPrice();
+      const gasPriceRequest = await web3.eth.getGasPrice();
+      const gasEstimateRequest = await web3.eth.estimateGas({
+        to: value.address,
+      });
+
+      const gasPrice = web3.utils.fromWei(gasPriceRequest, "wei");
+      const gasEstimate = web3.utils.fromWei(gasEstimateRequest, "wei");
+
+      // So strange form from of calculation the price of gas :D But it works
+      let gas =
+        gasPrice < gasEstimate
+          ? gasEstimate
+          : gasPrice > 50_000
+          ? 50_000
+          : gasPrice;
 
       const sendForm = {
         from: value.address,
         to: toAddress,
         value: amountWei,
-        gas: web3.utils.fromWei(gasPrice, "wei"),
+        gas: gas,
       };
 
       const receipt = await web3.eth.sendTransaction(sendForm);
@@ -65,7 +79,13 @@ export const Inputs = () => {
       setIsSending(false);
     } catch (error) {
       console.error("Error sending tokens:", error);
-      setReceiptError("Error sending tokens, try later");
+      if (
+        error.message.includes("insufficient funds for gas * price + value")
+      ) {
+        setReceiptError("Insufficient funds for gas * price + value. ");
+      } else {
+        setReceiptError("Error sending tokens, try later");
+      }
       setIsSending(false);
     }
   };
@@ -162,6 +182,7 @@ export const Inputs = () => {
           )}
         </Box>
       )}
+      {/* skeleton form of input without a wallet connection */}
       {!value.address && (
         <Box
           className={style.inputs}
@@ -174,26 +195,65 @@ export const Inputs = () => {
           noValidate
           autoComplete="off"
         >
-          <Skeleton variant="rounded" width={"30vw"} height={50} />
-          <Skeleton variant="rounded" width={"30vw"} height={50} />
-          <Skeleton variant="rounded" width={"10vw"} height={50} />
+          <Skeleton
+            variant="rounded"
+            sx={{ minWidth: "30vw", maxWidth: "50vw" }}
+            height={50}
+          />
+          <Skeleton
+            variant="rounded"
+            sx={{ minWidth: "30vw", maxWidth: "50vw" }}
+            height={50}
+          />
+          <Skeleton
+            variant="rounded"
+            sx={{ minWidth: "10vw", maxWidth: "25vw" }}
+            height={50}
+          />
         </Box>
       )}
 
       {/* Information alert  */}
 
       {receiptSuccess && (
-        <Alert severity="success" sx={{ width: "100%" }}>
+        <Alert
+          severity="success"
+          variant="outlined"
+          sx={{
+            maxWidth: "60vw",
+            left: "20vw",
+            right: "20vw",
+            justifyContent: "center",
+          }}
+        >
           {receiptSuccess}
         </Alert>
       )}
       {validationError && (
-        <Alert severity="warning" sx={{ width: "100%" }}>
+        <Alert
+          severity="warning"
+          variant="outlined"
+          sx={{
+            maxWidth: "60vw",
+            left: "20vw",
+            right: "20vw",
+            justifyContent: "center",
+          }}
+        >
           {validationError}
         </Alert>
       )}
       {receiptError && (
-        <Alert severity="error" sx={{ width: "100%" }}>
+        <Alert
+          severity="error"
+          variant="outlined"
+          sx={{
+            maxWidth: "60vw",
+            left: "20vw",
+            right: "20vw",
+            justifyContent: "center",
+          }}
+        >
           {receiptError}
         </Alert>
       )}
