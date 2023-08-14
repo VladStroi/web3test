@@ -5,24 +5,23 @@ import { Context } from "./context";
 
 import { Header } from "./components/header";
 import { Inputs } from "./components/inputs";
+import { HistoryTransactions } from "./components/history-transactions";
+import { GitLink } from "./components/git-link";
 
 function App() {
-  
   const [address, setAddress] = useState(null);
 
   return (
     <Context.Provider
       value={{
-        address, setAddress
+        address,
+        setAddress,
       }}
     >
-      <>
-        <Header />
-        <Inputs />
-        {/* <button>
-      <a href="https://github.com/VladStroi/web3test">https://github.com/VladStroi/web3test</a>
-    </button> */}
-      </>
+      <Header />
+      <Inputs />
+      <HistoryTransactions />
+      <GitLink/>
     </Context.Provider>
   );
 }

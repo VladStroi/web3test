@@ -54,8 +54,7 @@ export const Header = () => {
           const balanceEth = web3.utils.fromWei(balanceWei, "ether");
           setBalance(parseFloat(balanceEth).toFixed(4).slice(0, -1));
         } else {
-          console.log("Connect to MetaMask using the Connect button");
-          setCheckWallet("Connect to MetaMask using the [Connect button]");
+          setCheckWallet("Connect to MetaMask");
         }
       } catch (error) {
         console.error(error.message);
@@ -68,7 +67,7 @@ export const Header = () => {
     }
   };
 
-// Manage notifications
+  // Manage notifications
   useEffect(() => {
     const timeout = setTimeout(() => {
       setCheckWallet(false);
@@ -84,25 +83,34 @@ export const Header = () => {
     return () => clearTimeout(timeout);
   }, [value.address]);
 
-
   return (
-    <header className={style.header}>
-      <LogoHeader />
-      <Box>
-        <Button onClick={addMetaMask} variant="outlined" color="inherit">
-          {value.address
-            ? `Address: ${value.address.substring(
-                0,
-                4
-              )}...${value.address.substring(38)}`
-            : "Connect Wallet"}
-        </Button>
-        {value.address && <div>Balance: {balance} ETH</div>}
+    <>
+      <header className={style.header}>
+        <LogoHeader />
+        <Box>
+          <Button onClick={addMetaMask} variant="outlined" color="inherit">
+            {value.address
+              ? `Address: ${value.address.substring(
+                  0,
+                  4
+                )}...${value.address.substring(38)}`
+              : "Connect Wallet"}
+          </Button>
+          {value.address && <div>Balance: {balance} ETH</div>}
+        </Box>
+      </header>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          margin: "15vh 0 0 0",
+        }}
+      >
+        {checkWallet && <Alert severity="warning">{checkWallet}</Alert>}
         {isVisible && value.address && (
           <Alert severity="success">the wallet is connected</Alert>
         )}
-        {checkWallet && <Alert severity="warning">{checkWallet}</Alert>}
       </Box>
-    </header>
+    </>
   );
 };

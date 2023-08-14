@@ -28,16 +28,16 @@ export const Inputs = () => {
   const [receiptError, setReceiptError] = useState(false);
   const [receiptSuccess, setReceiptSuccess] = useState(false);
 
-  // Fetch address and balance using async/await
-  const getAddresAndBalance = async () => {
+  // Fetch balance
+  const getBalance = async () => {
     if (window.ethereum) {
       try {
         const balanceWei = await web3.eth.getBalance(value.address);
         const balanceEth = web3.utils.fromWei(balanceWei, "ether");
         return { balance: balanceEth };
       } catch (error) {
-        console.error("Error fetching address and balance:", error);
-        setReceiptError("Error fetching address and balance");
+        console.error("Error fetching balance:", error);
+        setReceiptError("Error fetching balance");
       }
     }
   };
@@ -59,12 +59,12 @@ export const Inputs = () => {
 
       // So strange form from of calculation the price of gas :D But it works
       let gas =
-        gasPrice < gasEstimate
+        Number(gasPrice) < Number(gasEstimate)
           ? gasEstimate
           : gasPrice > 50_000
           ? 50_000
           : gasPrice;
-
+          
       const sendForm = {
         from: value.address,
         to: toAddress,
@@ -75,6 +75,7 @@ export const Inputs = () => {
       const receipt = await web3.eth.sendTransaction(sendForm);
 
       console.log("Transaction receipt:", receipt);
+      transactionSuccess(value.address, toAddress, amountWei);
       setReceiptSuccess("Transaction successful");
       setIsSending(false);
     } catch (error) {
@@ -90,10 +91,28 @@ export const Inputs = () => {
     }
   };
 
+  // Adding successful transactions to local storage
+  const transactionSuccess = (from, to, amount) => {
+    const newTransaction = {
+      from: from,
+      to: to,
+      amount: amount,
+      date: new Date().toLocaleString(),
+    };
+
+    const transactionHistory =
+      JSON.parse(localStorage.getItem("transactionHistory")) || [];
+    transactionHistory.unshift(newTransaction);
+    localStorage.setItem(
+      "transactionHistory",
+      JSON.stringify(transactionHistory)
+    );
+  };
+
   // Data validation from input fields
   const validateAndSend = async () => {
     try {
-      const { balance } = await getAddresAndBalance();
+      const { balance } = await getBalance();
 
       const validAddress = /^(0x)?[0-9a-fA-F]{40}$/.test(toAddress);
       const validAmount =
@@ -143,6 +162,7 @@ export const Inputs = () => {
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
+            margin: "10vh 0"
           }}
           noValidate
           autoComplete="off"
